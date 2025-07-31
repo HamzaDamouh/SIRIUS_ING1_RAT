@@ -31,7 +31,7 @@ public class CoreBackendServer implements Runnable
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
     private final static String coreBackendServerConfigDefaultFileName = "core-backend-server.yaml";
     private static final String threadName = "core-backend-server";
-    private static final String dbEditorIsPGSQLHere = "mysql";
+    private static final String dbEditorIsPGSQLHere = "postgresql";
 
     private final CoreBackendServerConfiguration config = withConfiguration();
 

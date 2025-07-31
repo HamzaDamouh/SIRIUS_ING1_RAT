@@ -53,6 +53,8 @@ public abstract class ClientRequest<N,S> implements Runnable {
         self.start();
 
     }
+
+    // Socket + Multithreading
     @Override
     public void run() {
         try {

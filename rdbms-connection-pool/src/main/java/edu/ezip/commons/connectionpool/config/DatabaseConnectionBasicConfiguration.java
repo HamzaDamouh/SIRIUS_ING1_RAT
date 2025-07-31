@@ -21,6 +21,9 @@ public class DatabaseConnectionBasicConfiguration {
     private final static String LoggingLabel = "C o n n - p o o l";
 
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
+
+
+    // Singleton Pattern
     public static DatabaseConnectionBasicConfiguration getInstance() {
         if(inst == null) {
             new DatabaseConnectionBasicConfiguration(true);
@@ -28,6 +31,8 @@ public class DatabaseConnectionBasicConfiguration {
         return inst;
     }
 
+
+    // SNAKE YAML stuff
     private  DatabaseConnectionBasicConfiguration(final boolean t) {
         final Yaml yaml = new Yaml(new Constructor(DatabaseConnectionBasicConfiguration.class));
         final InputStream nptStrm = this.getClass().getClassLoader().getResourceAsStream(dbConfigDefaultFileName);
@@ -35,8 +40,9 @@ public class DatabaseConnectionBasicConfiguration {
         inst = yaml.load(nptStrm);
         logger.debug("Configuration loaded : {}", inst.toString());
     }
-    private DatabaseConnectionBasicConfiguration() {
-    }
+
+    public DatabaseConnectionBasicConfiguration() {}
+
     public String getDatabaseName() {
         return databaseName;
     }

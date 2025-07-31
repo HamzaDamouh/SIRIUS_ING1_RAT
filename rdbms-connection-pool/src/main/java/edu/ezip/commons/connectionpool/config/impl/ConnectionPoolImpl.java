@@ -18,15 +18,24 @@ public class ConnectionPoolImpl {
 
     private final static String jdbc = "jdbc";
     private final static String LoggingLabel = "C o n n - p o o l";
+
+
+
+    // Singleton Pattern
     public static ConnectionPoolImpl inst = null;
+
+
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
     private static String url;
     private  static String databaseURL;
-    // A really appropriate JAVA Object (since JAVA 7) to implement this kind of stuff
-    // Remind that BlockingDeque is a synchronized ready object;
+
+
+
+    // LinkedBlockingDeque = Multithreading Safe take() / put()
     private static final BlockingDeque<Connection> connections = new LinkedBlockingDeque<Connection>(
                                                                 DatabaseConnectionBasicConfiguration.getInstance().
                                                                         getPoolSize());
+
 
     public static ConnectionPoolImpl getInstance(final String dbEditor) throws SQLException, UnsupportedEncodingException {
         if(inst == null) {
@@ -35,6 +44,7 @@ public class ConnectionPoolImpl {
         return inst;
     }
 
+    // JDBC URL Construction
     private ConnectionPoolImpl(final String dbEditor) throws SQLException, UnsupportedEncodingException {
         final DatabaseConnectionBasicConfiguration config =  DatabaseConnectionBasicConfiguration.getInstance();
         final StringBuffer letsBuildUrl = new StringBuffer();
