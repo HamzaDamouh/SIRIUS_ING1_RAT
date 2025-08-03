@@ -9,9 +9,8 @@ public class Response {
 
     public String responseBody;
 
-    public Response() {
+    public Response() {}
 
-    }
     public Response(String requestId, String responseBody) {
         this.requestId = requestId;
         this.responseBody = responseBody;
