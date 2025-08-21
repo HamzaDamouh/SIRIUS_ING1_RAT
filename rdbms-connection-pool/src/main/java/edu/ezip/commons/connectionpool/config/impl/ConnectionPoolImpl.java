@@ -60,41 +60,44 @@ public class ConnectionPoolImpl {
 
         initConnections();
         showConnections();
-        // To terminate : terminatePool();
+        // terminatePool();
     }
 
-    private void initConnections() throws SQLException {
-        int justTobeSureConnection = 0;
-        while ( 0 < connections.remainingCapacity()) {
-            connections.addLast(createConnection());
-            justTobeSureConnection++;
-        }
-        logger.debug("{} created, pool size = {}", justTobeSureConnection, DatabaseConnectionBasicConfiguration.
-                getInstance().getPoolSize());
-    }
-
-    public void terminatePool() throws SQLException {
-        int justTobeSureConnection = 0;
-        while ( !connections.isEmpty()) {
-            final Connection c = connections.pollFirst();
-            justTobeSureConnection++;
-            if ( null != c) c.close();
-        }
-        logger.debug("{} released, pool size = {}", justTobeSureConnection, DatabaseConnectionBasicConfiguration.
-                getInstance().getPoolSize());
-    }
 
     private final Connection createConnection() throws SQLException {
         return DriverManager.getConnection(this.url);
     }
 
+    private void initConnections() throws SQLException {
+        int i = 0;
+        while ( 0 < connections.remainingCapacity()) {
+            connections.addLast(createConnection());
+            i++;
+        }
+        logger.debug("{} created, pool size = {}", i, DatabaseConnectionBasicConfiguration.
+                getInstance().getPoolSize());
+    }
+
+    public void terminatePool() throws SQLException {
+        int i = 0;
+        while ( !connections.isEmpty()) {
+            final Connection c = connections.pollFirst();
+            i++;
+            if ( null != c) c.close();
+        }
+        logger.debug("{} released, pool size = {}", i, DatabaseConnectionBasicConfiguration.
+                getInstance().getPoolSize());
+    }
+
+
+
     private void showConnections() {
-        int howmuch = 0;
+        int i = 0;
         final StringBuffer toShowConnections = new StringBuffer();
         toShowConnections.append("{");
         final Iterator<Connection> trtr = connections.iterator();
         while (trtr.hasNext()) {
-            if (howmuch++ > 0) toShowConnections.append(" ★ ");
+            if (i++ > 0) toShowConnections.append(" ★ ");
             final String toStringConnection = trtr.next().toString();
             toShowConnections.append(toStringConnection.replace("org.postgresql.jdbc.", ""));
         }
@@ -105,16 +108,9 @@ public class ConnectionPoolImpl {
     public int available() {
         return connections.size();
     }
-
     public final Connection get() {
         return connections.pollFirst();
     }
-
-    public void release(Connection connection) throws InterruptedException {
-        connections.offerLast(connection);
-    }
-
-//    private void closeConnection(final Connection c) throws SQLException {
-//        c.close();
-//    }
+    public void release(Connection connection) throws InterruptedException {connections.offerLast(connection);}
+    private void closeConnection(final Connection c) throws SQLException {c.close();}
 }

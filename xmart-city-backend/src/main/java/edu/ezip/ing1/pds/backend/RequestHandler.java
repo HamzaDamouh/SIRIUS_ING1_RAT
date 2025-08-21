@@ -1,13 +1,15 @@
 package edu.ezip.ing1.pds.backend;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+
 import edu.ezip.commons.LoggingUtils;
 import edu.ezip.ing1.pds.business.server.XMartCityService;
 import edu.ezip.ing1.pds.commons.Request;
 import edu.ezip.ing1.pds.commons.Response;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -15,24 +17,31 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+
+import java.lang.reflect.InvocationTargetException;
+
 import java.sql.Connection;
 import java.sql.SQLException;
+
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 public class RequestHandler implements Runnable {
+
     private final Socket socket;
     private final Connection connection;
+
     private final Thread self;
     private static final String threadNamePrfx = "core-request-handler";
+
     private final InputStream instream;
     private final OutputStream outstream;
-    // private final Connection connection;
+
     private final static String LoggingLabel = "C o re - B a c k e n d - S e r v e r";
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
+
     private int requestCount = 0;
 
     private final XMartCityService xmartCityService = XMartCityService.getInstance();

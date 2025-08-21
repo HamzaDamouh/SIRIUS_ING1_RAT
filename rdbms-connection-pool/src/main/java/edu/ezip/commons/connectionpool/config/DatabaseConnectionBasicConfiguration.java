@@ -16,14 +16,15 @@ public class DatabaseConnectionBasicConfiguration {
     private String  password;
     private short   port;
     private short   poolSize;
-    public static DatabaseConnectionBasicConfiguration inst = null;
-    private final static String dbConfigDefaultFileName = "db-config.yaml";
-    private final static String LoggingLabel = "C o n n - p o o l";
 
+
+    private final static String dbConfigDefaultFileName = "db-config.yaml";
+
+    private final static String LoggingLabel = "C o n n - p o o l";
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
 
 
-    // Singleton Pattern
+    public static DatabaseConnectionBasicConfiguration inst = null;
     public static DatabaseConnectionBasicConfiguration getInstance() {
         if(inst == null) {
             new DatabaseConnectionBasicConfiguration(true);
@@ -32,7 +33,7 @@ public class DatabaseConnectionBasicConfiguration {
     }
 
 
-    // SNAKE YAML stuff
+
     private  DatabaseConnectionBasicConfiguration(final boolean t) {
         final Yaml yaml = new Yaml(new Constructor(DatabaseConnectionBasicConfiguration.class));
         final InputStream nptStrm = this.getClass().getClassLoader().getResourceAsStream(dbConfigDefaultFileName);
