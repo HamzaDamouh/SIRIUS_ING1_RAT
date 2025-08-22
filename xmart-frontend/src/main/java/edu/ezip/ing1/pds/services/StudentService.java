@@ -3,8 +3,6 @@ package edu.ezip.ing1.pds.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import edu.ezip.commons.LoggingUtils;
-import edu.ezip.ing1.pds.business.dto.Student;
-import edu.ezip.ing1.pds.business.dto.Students;
 import edu.ezip.ing1.pds.client.commons.ClientRequest;
 import edu.ezip.ing1.pds.client.commons.ConfigLoader;
 import edu.ezip.ing1.pds.client.commons.NetworkConfig;

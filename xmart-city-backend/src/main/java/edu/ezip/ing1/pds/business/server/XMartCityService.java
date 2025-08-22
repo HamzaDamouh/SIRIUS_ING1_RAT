@@ -2,8 +2,6 @@ package edu.ezip.ing1.pds.business.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.ezip.ing1.pds.business.dto.Student;
-import edu.ezip.ing1.pds.business.dto.Students;
 import edu.ezip.ing1.pds.commons.Request;
 import edu.ezip.ing1.pds.commons.Response;
 import org.slf4j.Logger;
@@ -11,10 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class XMartCityService {
 
