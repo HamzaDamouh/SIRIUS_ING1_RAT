@@ -1,8 +1,8 @@
 databaseName: "pds"
-#host: "localhost"
-host: "172.31.252.82"
+host: "localhost"
+#host: "172.31.252.82"
 port: 5432
-#username : "postgres"
-username: "nutri"
+username : "postgres"
+#username: "nutri"
 password: "postgres"
 poolSize: 1

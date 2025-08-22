@@ -30,9 +30,9 @@ public class CoreBackendServer implements Runnable
     private final static String LoggingLabel = "C o re - B a c k e n d - S e r v e r";
     private final Logger logger = LoggerFactory.getLogger(LoggingLabel);
 
-    private final static String coreBackendServerConfigDefaultFileName = "core-backend-server.yaml";
+    private final static String coreBackendServerFile = "core-backend-server.yaml";
     private static final String threadName = "core-backend-server";
-    private static final String dbEditorIsPGSQLHere = "postgresql";
+    private static final String dbEditor = "postgresql";
 
     private final CoreBackendServerConfiguration config = withConfiguration();
 
@@ -42,26 +42,27 @@ public class CoreBackendServer implements Runnable
     private volatile boolean topToStop = false;
     private int requestHandlerCreatedSoFar = 0;
 
-    // Should rather use an Interface variable
-    private ConnectionPoolImpl connectionPool = ConnectionPoolImpl.getInstance(dbEditorIsPGSQLHere);
+    // 2) Get a Pool
+    private ConnectionPoolImpl connectionPool = ConnectionPoolImpl.getInstance(dbEditor);
 
-    // This class method should be factorized.
+    // 1) Get the server port
     private final CoreBackendServerConfiguration withConfiguration () {
         final Yaml yaml = new Yaml(new Constructor(CoreBackendServerConfiguration.class));
         final InputStream nptStrm =
-                this.getClass().getClassLoader().getResourceAsStream(coreBackendServerConfigDefaultFileName);
-        logger.debug("Load config file : {}", coreBackendServerConfigDefaultFileName);
+                this.getClass().getClassLoader().getResourceAsStream(coreBackendServerFile);
+        logger.debug("Load config file : {}", coreBackendServerFile);
         final CoreBackendServerConfiguration configHere =  yaml.load(nptStrm);
         logger.debug("Configuration loaded : {}", configHere.toString());
         return configHere;
     }
 
+
     public CoreBackendServer() throws IOException, SQLException {
+        // 3) Set a server Socket listens to Port
         coreServerSocket = new ServerSocket(config.getListenPort());
         coreServerSocket.setSoTimeout(5000);
         logger.debug("Configuration loaded : {}", coreServerSocket.toString());
         coreThread = new Thread(this, threadName);
-        // Starts mysefl.
         coreThread.start();
     }
 
@@ -71,6 +72,9 @@ public class CoreBackendServer implements Runnable
 
     @Override
     public void run() {
+        // 4) Main Loop : wait for client accept()
+        //      4.1) wait for client [accept()]
+        //      4.2) [IF conn from pool available] make a Request Handler
         while ( !topToStop ) {
             try {
                 logger.trace("{} {}", topToStop, connectionPool.available());
@@ -104,6 +108,8 @@ public class CoreBackendServer implements Runnable
     }
 
     // More than once Request Handler may call this method. That's why it is sync.
+
+    // 5) Cleaning Request Up
     public synchronized void completeRequestHandler(final RequestHandler requestHandler) {
         try {
             connectionPool.release(requestHandler.getConnection());
@@ -118,6 +124,9 @@ public class CoreBackendServer implements Runnable
         requestHandlers.remove(requestHandler);
 
     }
+
+
+    // 6) Stop Server
     public synchronized void stop() {
         logger.trace("Stop() called within Core Backend Server ... ");
         topToStop = true;

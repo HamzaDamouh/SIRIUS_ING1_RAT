@@ -49,15 +49,18 @@ public class RequestHandler implements Runnable {
 
     private static final int maxTimeLapToGetAClientPayloadInMs = 5000;
     private static final int timeStepMs = 300;
+
     private final BlockingDeque<Integer> waitArtifact = new LinkedBlockingDeque<Integer>(1);
 
     protected RequestHandler(final Socket socket,
                              final Connection connection,
                              final int myBirthDate,
                              final CoreBackendServer father) throws IOException {
+
         this.socket = socket;
         this.connection = connection;
         this.father = father;
+
         final StringBuffer threadName = new StringBuffer();
         threadName.append(threadNamePrfx).append("★").append(String.format("%04d",myBirthDate));
         self = new Thread(this, threadName.toString());
@@ -115,7 +118,6 @@ public class RequestHandler implements Runnable {
 
     private final byte [] getResponse(final Response response) throws JsonProcessingException {
         final ObjectMapper mapper = new ObjectMapper();
-        //mapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(response);
     }
 
