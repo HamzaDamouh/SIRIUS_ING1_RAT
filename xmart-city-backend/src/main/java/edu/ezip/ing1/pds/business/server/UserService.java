@@ -20,23 +20,26 @@ public class UserService {
 
     // SQL
     private static final String INSERT_USER =
-            "INSERT INTO users (email, password_hash, full_name, height_cm, weight_kg, sex, daily_kcal_target) "+
-            "VALUES (?,?,?,?,?,?,?) RETURNING id";
+            "INSERT INTO users (email, password_hash, full_name, height_cm, weight_kg, sex, age, activity_level, daily_kcal_target) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
 
     private static final String AUTH_USER =
-            "SELECT mail, password_hash, full_name, height_cm, weight_kg, sex, daily_kcal_target "+
-             "FROM users WHERE email=? AND password_hash=?";
+            "SELECT id, email, full_name, height_cm, weight_kg, sex, age, activity_level, daily_kcal_target " +
+                    "FROM users WHERE email = ? AND password_hash = ?";
 
     private static final String GET_USER_BY_ID =
-            "SELECT id, email, full_name, height_cm, weight_kg, sex, daily_kcal_target FROM users WHERE id = ?";
+            "SELECT id, email, full_name, height_cm, weight_kg, sex, age, activity_level, daily_kcal_target " +
+                    "FROM users WHERE id = ?";
 
     private static final String UPDATE_USER =
-            "UPDATE users SET full_name = ?, height_cm = ?, weight_kg = ?, sex = ?, daily_kcal_target = ? WHERE id = ? ";
+            "UPDATE users SET full_name = ?, height_cm = ?, weight_kg = ?, sex = ?, age = ?, activity_level = ?, daily_kcal_target = ? " +
+                    "WHERE id = ?";
 
     // Endpoints
 
     public Response insertUser(final Request req, final Connection conn) throws IOException, SQLException {
         final User user = mapper.readValue(req.getRequestBody(), User.class);
+        final int computedTarget = computeDailyTarget(user);
 
         try (PreparedStatement ps = conn.prepareStatement(INSERT_USER)){
             ps.setString(1, user.getEmail());
@@ -45,7 +48,9 @@ public class UserService {
             ps.setBigDecimal(4, toBigDec(user.getHeightCm()));
             ps.setBigDecimal(5, toBigDec(user.getWeightKg()));
             ps.setString(6, user.getSex());
-            ps.setObject(7, user.getDailyKcalTarget(), Types.INTEGER);
+            ps.setObject(7, user.getAge(), Types.INTEGER);
+            ps.setString(8, safeActivity(user.getActivityLevel()));
+            ps.setObject(9, computedTarget, Types.INTEGER);
 
             try (ResultSet rs = ps.executeQuery()){
                 if (rs.next()) user.setId(rs.getLong(1));
@@ -53,6 +58,7 @@ public class UserService {
         }
 
         user.setPassword(null);
+        user.setDailyKcalTarget(computedTarget);
         user.setBmi(computeBmi(user.getHeightCm(), user.getWeightKg()));
         return ok(req, user);
     }
@@ -91,15 +97,20 @@ public class UserService {
 
     public Response updateUser(final Request req, final Connection conn) throws SQLException, IOException {
         final User u = mapper.readValue(req.getRequestBody(), User.class);
+        final int computedTarget = computeDailyTarget(u);
+
         try (PreparedStatement ps = conn.prepareStatement(UPDATE_USER)) {
             ps.setString(1, u.getFullName());
             ps.setBigDecimal(2, toBigDec(u.getHeightCm()));
             ps.setBigDecimal(3, toBigDec(u.getWeightKg()));
             ps.setString(4, u.getSex());
-            ps.setObject(5, u.getDailyKcalTarget(), Types.INTEGER);
-            ps.setLong(6, u.getId());
+            ps.setObject(5, u.getAge(), Types.INTEGER);
+            ps.setString(6, safeActivity(u.getActivityLevel()));
+            ps.setObject(7, computedTarget, Types.INTEGER);
+            ps.setLong(8, u.getId());
             ps.executeUpdate();
         }
+
         return getUserById(new Request(), conn);
     }
 
@@ -154,6 +165,44 @@ public class UserService {
         double h = heightCm / 100.0;
         return Math.round((weightKg / (h*h)) * 100.0) / 100.0;
     }
+
+    private String safeActivity(String a) {
+        if (a == null) return "sedentary";
+        switch (a) {
+            case "light":
+            case "moderate":
+            case "active":
+            case "sedentary": return a;
+            default: return "sedentary";
+        }
+    }
+
+
+    private int computeDailyTarget(User u) {
+        double kg = u.getWeightKg() == null ? 70.0 : u.getWeightKg();
+        double cm = u.getHeightCm() == null ? 170.0 : u.getHeightCm();
+        int age = u.getAge() == null ? 30 : u.getAge();
+        String sex = u.getSex() == null ? "O" : u.getSex();
+
+        double bmr;
+        switch (sex) {
+            case "M": bmr = 10*kg + 6.25*cm - 5*age + 5; break;
+            case "F": bmr = 10*kg + 6.25*cm - 5*age - 161; break;
+            default:  bmr = 10*kg + 6.25*cm - 5*age - 78;
+        }
+
+        double factor;
+        switch (safeActivity(u.getActivityLevel())) {
+            case "light":    factor = 1.375; break;
+            case "moderate": factor = 1.55;  break;
+            case "active":   factor = 1.725; break;
+            default:         factor = 1.20;  break;
+        }
+
+        int tdee = (int)Math.round(bmr * factor);
+        return Math.max(1200, Math.min(tdee, 5000));
+    }
+
 
 
 

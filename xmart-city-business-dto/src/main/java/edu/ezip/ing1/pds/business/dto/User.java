@@ -11,10 +11,10 @@ public class User {
     private String fullName;
     private Double heightCm;
     private Double weightKg;
+    private Integer age;
+    private String activityLevel;
     private String sex;
     private Integer dailyKcalTarget;
-
-
     private Double bmi;
 
     public User() {}
@@ -47,6 +47,12 @@ public class User {
 
     public String getSex() { return sex; }
     public void setSex(String sex) { this.sex = sex; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+
+    public String getActivityLevel() { return activityLevel; }
+    public void setActivityLevel(String activityLevel) { this.activityLevel = activityLevel; }
 
     public Integer getDailyKcalTarget() { return dailyKcalTarget; }
     public void setDailyKcalTarget(Integer dailyKcalTarget) { this.dailyKcalTarget = dailyKcalTarget; }
