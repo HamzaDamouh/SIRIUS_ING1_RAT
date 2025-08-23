@@ -116,6 +116,8 @@ public class RequestHandler implements Runnable {
         return request;
     }
 
+
+
     private final byte [] getResponse(final Response response) throws JsonProcessingException {
         final ObjectMapper mapper = new ObjectMapper();
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(response);

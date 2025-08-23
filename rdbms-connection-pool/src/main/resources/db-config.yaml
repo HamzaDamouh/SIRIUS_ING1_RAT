@@ -5,4 +5,8 @@ port: 5432
 username : "postgres"
 #username: "nutri"
 password: "postgres"
-poolSize: 1
+poolSize: 3
+
+
+
+

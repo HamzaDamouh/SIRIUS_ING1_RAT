@@ -1,5 +1,8 @@
 package edu.ezip.ing1.pds.client.commons;
 
+
+
+// POJO class
 public class NetworkConfig {
     private String ipaddress;
     private int tcpport;

@@ -35,7 +35,6 @@ public class UserService {
 
     // Endpoints
 
-
     public Response insertUser(final Request req, final Connection conn) throws IOException, SQLException {
         final User user = mapper.readValue(req.getRequestBody(), User.class);
 
@@ -107,6 +106,7 @@ public class UserService {
 
     // networking + debugging helpers
 
+    // no check
     private Response ok(Request req, Object body) throws JsonProcessingException {
         return new Response(req.getRequestId(), mapper.writeValueAsString(body));
     }

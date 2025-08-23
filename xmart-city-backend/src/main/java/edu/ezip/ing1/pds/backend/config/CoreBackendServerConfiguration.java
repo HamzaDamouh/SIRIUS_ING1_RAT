@@ -7,6 +7,8 @@ import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.InputStream;
 
+
+// POJO class for yaml
 public class CoreBackendServerConfiguration {
     private int listenPort;
     public CoreBackendServerConfiguration() {
