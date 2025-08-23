@@ -1,8 +1,5 @@
 package edu.ezip.ing1.pds.business.server;
 
-
-
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ezip.ing1.pds.business.dto.User;
@@ -16,9 +13,11 @@ import java.sql.*;
 public class UserService {
 
     private final ObjectMapper mapper;
-    public UserService(ObjectMapper mapper) {this.mapper = mapper;}
+    public UserService(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
-    // SQL
+    // SQL Statements
     private static final String INSERT_USER =
             "INSERT INTO users (email, password_hash, full_name, height_cm, weight_kg, sex, age, activity_level, daily_kcal_target) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
@@ -41,7 +40,7 @@ public class UserService {
         final User user = mapper.readValue(req.getRequestBody(), User.class);
         final int computedTarget = computeDailyTarget(user);
 
-        try (PreparedStatement ps = conn.prepareStatement(INSERT_USER)){
+        try (PreparedStatement ps = conn.prepareStatement(INSERT_USER)) {
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getPassword());
             ps.setString(3, user.getFullName());
@@ -52,8 +51,10 @@ public class UserService {
             ps.setString(8, safeActivity(user.getActivityLevel()));
             ps.setObject(9, computedTarget, Types.INTEGER);
 
-            try (ResultSet rs = ps.executeQuery()){
-                if (rs.next()) user.setId(rs.getLong(1));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    user.setId(rs.getLong(1));
+                }
             }
         }
 
@@ -63,17 +64,16 @@ public class UserService {
         return ok(req, user);
     }
 
-
     public Response authUser(final Request req, final Connection conn) throws IOException, SQLException {
         final User login = mapper.readValue(req.getRequestBody(), User.class);
-        try (PreparedStatement ps = conn.prepareStatement(AUTH_USER)){
+        try (PreparedStatement ps = conn.prepareStatement(AUTH_USER)) {
             ps.setString(1, login.getEmail());
             ps.setString(2, login.getPassword());
-            try (ResultSet rs = ps.executeQuery()){
-                if (rs.next()){
-                    final User u = mapUser(rs);
-                    u.setBmi(computeBmi(u.getHeightCm(), u.getWeightKg()));
-                    return ok(req, u);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    final User user = mapUser(rs);
+                    user.setBmi(computeBmi(user.getHeightCm(), user.getWeightKg()));
+                    return ok(req, user);
                 }
             }
         }
@@ -81,14 +81,14 @@ public class UserService {
     }
 
     public Response getUserById(final Request req, final Connection conn) throws SQLException, IOException {
-        final User r = mapper.readValue(req.getRequestBody(), User.class);
+        final User requestUser = mapper.readValue(req.getRequestBody(), User.class);
         try (PreparedStatement ps = conn.prepareStatement(GET_USER_BY_ID)) {
-            ps.setLong(1, r.getId());
+            ps.setLong(1, requestUser.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    final User u = mapUser(rs);
-                    u.setBmi(computeBmi(u.getHeightCm(), u.getWeightKg()));
-                    return ok(req, u);
+                    final User user = mapUser(rs);
+                    user.setBmi(computeBmi(user.getHeightCm(), user.getWeightKg()));
+                    return ok(req, user);
                 }
             }
         }
@@ -96,114 +96,169 @@ public class UserService {
     }
 
     public Response updateUser(final Request req, final Connection conn) throws SQLException, IOException {
-        final User u = mapper.readValue(req.getRequestBody(), User.class);
-        final int computedTarget = computeDailyTarget(u);
+        final User userToUpdate = mapper.readValue(req.getRequestBody(), User.class);
+        final int computedTarget = computeDailyTarget(userToUpdate);
 
         try (PreparedStatement ps = conn.prepareStatement(UPDATE_USER)) {
-            ps.setString(1, u.getFullName());
-            ps.setBigDecimal(2, toBigDec(u.getHeightCm()));
-            ps.setBigDecimal(3, toBigDec(u.getWeightKg()));
-            ps.setString(4, u.getSex());
-            ps.setObject(5, u.getAge(), Types.INTEGER);
-            ps.setString(6, safeActivity(u.getActivityLevel()));
+            ps.setString(1, userToUpdate.getFullName());
+            ps.setBigDecimal(2, toBigDec(userToUpdate.getHeightCm()));
+            ps.setBigDecimal(3, toBigDec(userToUpdate.getWeightKg()));
+            ps.setString(4, userToUpdate.getSex());
+            ps.setObject(5, userToUpdate.getAge(), Types.INTEGER);
+            ps.setString(6, safeActivity(userToUpdate.getActivityLevel()));
             ps.setObject(7, computedTarget, Types.INTEGER);
-            ps.setLong(8, u.getId());
+            ps.setLong(8, userToUpdate.getId());
             ps.executeUpdate();
         }
 
+        // Return the updated user by fetching it again from the database
         return getUserById(new Request(), conn);
     }
 
-
     // networking + debugging helpers
 
-    // no check
     private Response ok(Request req, Object body) throws JsonProcessingException {
-        return new Response(req.getRequestId(), mapper.writeValueAsString(body));
+        // Convert the body object to a JSON string and create a success response
+        String jsonBody = mapper.writeValueAsString(body);
+        return new Response(req.getRequestId(), jsonBody);
     }
 
     private Response err(Request req, String code) {
+        // Create an error response with a simple JSON object
         return new Response(req.getRequestId(), "{\"error\":\"" + code + "\"}");
     }
-
 
     // conversion helpers
 
     private BigDecimal toBigDec(Double d) {
-        return d == null ? null : new BigDecimal(String.valueOf(d));
+        if (d == null) {
+            return null;
+        }
+        return new BigDecimal(String.valueOf(d));
     }
 
     private Double toDouble(Object o) {
-        if (o == null) return null;
-        if (o instanceof Number) return ((Number) o).doubleValue();
-        try { return Double.valueOf(o.toString()); } catch (Exception e) { return null; }
+        if (o == null) {
+            return null;
+        }
+        if (o instanceof Number) {
+            return ((Number) o).doubleValue();
+        }
+        try {
+            return Double.valueOf(o.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Object getAs(Object o, Class<?> target) {
-        if (o == null) return null;
-        if (target == Integer.class && o instanceof Number) return ((Number)o).intValue();
+        if (o == null) {
+            return null;
+        }
+        if (target == Integer.class && o instanceof Number) {
+            return ((Number) o).intValue();
+        }
         return o;
     }
-
 
     // business helpers
 
     private User mapUser(ResultSet rs) throws SQLException {
-        final User u = new User();
-        u.setId(rs.getLong("id"));
-        u.setEmail(rs.getString("email"));
-        u.setFullName(rs.getString("full_name"));
-        u.setHeightCm(toDouble(rs.getObject("height_cm")));
-        u.setWeightKg(toDouble(rs.getObject("weight_kg")));
-        u.setSex(rs.getString("sex"));
-        u.setDailyKcalTarget((Integer) getAs(rs.getObject("daily_kcal_target"), Integer.class));
-        return u;
+        // Create a new User object and populate it with data from the ResultSet
+        final User user = new User();
+        user.setId(rs.getLong("id"));
+        user.setEmail(rs.getString("email"));
+        user.setFullName(rs.getString("full_name"));
+        user.setHeightCm(toDouble(rs.getObject("height_cm")));
+        user.setWeightKg(toDouble(rs.getObject("weight_kg")));
+        user.setSex(rs.getString("sex"));
+
+        // Get and cast the daily kcal target, handling potential nulls
+        Object dailyKcalObject = rs.getObject("daily_kcal_target");
+        if (dailyKcalObject instanceof Number) {
+            user.setDailyKcalTarget(((Number) dailyKcalObject).intValue());
+        } else {
+            user.setDailyKcalTarget(null);
+        }
+        return user;
     }
 
     private Double computeBmi(Double heightCm, Double weightKg) {
-        if (heightCm == null || heightCm <= 0 || weightKg == null || weightKg <= 0) return null;
-        double h = heightCm / 100.0;
-        return Math.round((weightKg / (h*h)) * 100.0) / 100.0;
+        // Check for invalid input to prevent errors
+        if (heightCm == null || heightCm <= 0 || weightKg == null || weightKg <= 0) {
+            return null;
+        }
+        // Convert height to meters for the calculation
+        double heightMeters = heightCm / 100.0;
+        double bmi = weightKg / (heightMeters * heightMeters);
+        // Round the result to two decimal places
+        return Math.round(bmi * 100.0) / 100.0;
     }
 
-    private String safeActivity(String a) {
-        if (a == null) return "sedentary";
-        switch (a) {
+    // Check if the activity level is a valid option, otherwise default to "sedentary"
+    private String safeActivity(String activityLevel) {
+        if (activityLevel == null) {
+            return "sedentary";
+        }
+
+        switch (activityLevel) {
             case "light":
             case "moderate":
             case "active":
-            case "sedentary": return a;
-            default: return "sedentary";
+            case "sedentary":
+                return activityLevel;
+            default:
+                return "sedentary";
         }
     }
-
 
     private int computeDailyTarget(User u) {
-        double kg = u.getWeightKg() == null ? 70.0 : u.getWeightKg();
-        double cm = u.getHeightCm() == null ? 170.0 : u.getHeightCm();
-        int age = u.getAge() == null ? 30 : u.getAge();
-        String sex = u.getSex() == null ? "O" : u.getSex();
+        // Use default values if user data is missing
+        double kg = (u.getWeightKg() == null) ? 70.0 : u.getWeightKg();
+        double cm = (u.getHeightCm() == null) ? 170.0 : u.getHeightCm();
+        int age = (u.getAge() == null) ? 30 : u.getAge();
+        String sex = (u.getSex() == null) ? "O" : u.getSex();
 
+        // Calculate Basal Metabolic Rate (BMR) using Mifflin-St Jeor equation
         double bmr;
-        switch (sex) {
-            case "M": bmr = 10*kg + 6.25*cm - 5*age + 5; break;
-            case "F": bmr = 10*kg + 6.25*cm - 5*age - 161; break;
-            default:  bmr = 10*kg + 6.25*cm - 5*age - 78;
+        if ("M".equals(sex)) {
+            bmr = 10 * kg + 6.25 * cm - 5 * age + 5;
+        } else if ("F".equals(sex)) {
+            bmr = 10 * kg + 6.25 * cm - 5 * age - 161;
+        } else {
+            // For other/unknown sex
+            bmr = 10 * kg + 6.25 * cm - 5 * age - 78;
         }
 
+        // Determine the activity factor
         double factor;
-        switch (safeActivity(u.getActivityLevel())) {
-            case "light":    factor = 1.375; break;
-            case "moderate": factor = 1.55;  break;
-            case "active":   factor = 1.725; break;
-            default:         factor = 1.20;  break;
+        String activity = safeActivity(u.getActivityLevel());
+        if ("light".equals(activity)) {
+            factor = 1.375;
+        } else if ("moderate".equals(activity)) {
+            factor = 1.55;
+        } else if ("active".equals(activity)) {
+            factor = 1.725;
+        } else {
+            // Default to sedentary
+            factor = 1.20;
         }
 
-        int tdee = (int)Math.round(bmr * factor);
-        return Math.max(1200, Math.min(tdee, 5000));
+        // Calculate Total Daily Energy Expenditure (TDEE)
+        int tdee = (int) Math.round(bmr * factor);
+
+        // Ensure the target is within a safe range
+        int minTarget = 1200;
+        int maxTarget = 5000;
+        int finalTarget;
+
+        if (tdee < minTarget) {
+            finalTarget = minTarget;
+        } else if (tdee > maxTarget) {
+            finalTarget = maxTarget;
+        } else {
+            finalTarget = tdee;
+        }
+        return finalTarget;
     }
-
-
-
-
 }
